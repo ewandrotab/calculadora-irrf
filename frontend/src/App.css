@@ -39,6 +39,13 @@
   font-size: 14px;
 }
 
+.info-card { margin-top: 10px; padding: 14px; }
+.info-title { font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--text); }
+.info-grid { display: grid; grid-template-columns: repeat(2, max-content); gap: 12px 24px; }
+.info-item { display: flex; flex-direction: column; }
+.info-label { color: var(--muted); font-size: 12px; }
+.info-value { font-size: 16px; font-weight: 700; }
+
 .layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -147,3 +154,24 @@
   .actions { grid-column: span 1; justify-content: stretch; }
   .actions .btn { flex: 1; }
 }
+
+/* Tabela IRRF */
+.table-card { margin-top: 12px; }
+.table-wrap { overflow: auto; }
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.data-table thead th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.data-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.data-table tbody tr:hover { background: rgba(255,255,255,.02); }

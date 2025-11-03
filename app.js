@@ -87,16 +87,18 @@ app.post('/calcular-irrf', (req, res) => {
 	if (valor_irrf < 0) valor_irrf = 0; // Não retornar IR negativo
 	valor_irrf = round2(valor_irrf); // 2 casas decimais
 
-	// Redução conforme PL 1087/25 baseada no rendimento_tributavel (não na base)
-	let reducao_pl_1087_25 = 0;
-	if (rendimento_tributavel <= 5000) {
-		reducao_pl_1087_25 = 312.89;
-	} else if (rendimento_tributavel > 5000 && rendimento_tributavel <= 7350) {
-		reducao_pl_1087_25 = 978.62 - (0.133145 * rendimento_tributavel);
+	// Redução conforme PL 1087/25: aplicar sempre a equação (valor bruto)
+	let reducao_pl_formula = round2(978.62 - (0.133145 * rendimento_tributavel));
+	if (rendimento_tributavel > 7350) {
+		reducao_pl_formula = 0; // Limite: acima de 7.350 não há redução aplicável
 	}
-	// Limitar ao imposto calculado e não deixar negativo
-	reducao_pl_1087_25 = Math.max(0, Math.min(round2(reducao_pl_1087_25), valor_irrf));
-	const valor_irrf_apos_pl_1087_25 = round2(valor_irrf - reducao_pl_1087_25);
+	if (valor_irrf === 0) {
+		// Se não há IR devido, a redução também deve ser zero
+		reducao_pl_formula = 0;
+	}
+	// Redução aplicada ao imposto (limitada ao IR e não negativa)
+	const reducao_pl_aplicada = Math.max(0, Math.min(reducao_pl_formula, valor_irrf));
+	const valor_irrf_apos_pl_1087_25 = round2(valor_irrf - reducao_pl_aplicada);
 
 	const resposta = {
 		rendimento_tributavel,
@@ -111,10 +113,11 @@ app.post('/calcular-irrf', (req, res) => {
 		aliquota_irrf,
 		deducao_conforme_tabela: round2(deducao_conforme_tabela),
 		valor_irrf,
+		reducao_pl_1087_25: reducao_pl_formula,
 		...(
 			rendimento_tributavel > 7350
 				? { mensagem: 'A dedução prevista na PL 1085/25 não se aplica porque o rendimento tributável ultrapassa R$ 7.350,00.' }
-				: { reducao_pl_1087_25, valor_irrf_apos_pl_1087_25 }
+				: { valor_irrf_apos_pl_1087_25 }
 		)
 	};
 

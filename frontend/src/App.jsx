@@ -113,6 +113,19 @@ function App() {
       <header className="header">
         <h1>Simulador de IRRF</h1>
         <p className="subtitle">Tabela vigente a partir de 05/2025</p>
+        <div className="card info-card">
+          <div className="info-title">PL 1087/2025</div>
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label">Valor</span>
+              <span className="info-value">978,62</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Fator</span>
+              <span className="info-value">0,133145</span>
+            </div>
+          </div>
+        </div>
       </header>
 
       <div className="layout">
@@ -226,6 +239,11 @@ function App() {
         </section>
       </div>
 
+      <section className="card table-card">
+        <div className="info-title">Tabela de IRRF (a partir de 05/2025)</div>
+        <IRRFTabela />
+      </section>
+
       <footer className="footer">API: {API_BASE}/calcular-irrf</footer>
     </div>
   )
@@ -244,6 +262,44 @@ function ResultItem({ label, value, format, emphasis }) {
     <div className={`result-item ${emphasis ? 'emphasis' : ''}`}>
       <span className="result-label">{label}</span>
       <span className="result-value">{display}</span>
+    </div>
+  )
+}
+
+function formatPercent(value) {
+  return `${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
+}
+
+function IRRFTabela() {
+  const rows = [
+    { faixa: 'Faixa 1', base: 'Até R$ 2.428,80', aliquota: 0.0, deducao: 0.0 },
+    { faixa: 'Faixa 2', base: 'De R$ 2.428,81 até R$ 2.826,65', aliquota: 7.5, deducao: 182.16 },
+    { faixa: 'Faixa 3', base: 'De R$ 2.826,66 até R$ 3.751,05', aliquota: 15.0, deducao: 394.16 },
+    { faixa: 'Faixa 4', base: 'De R$ 3.751,06 até R$ 4.664,68', aliquota: 22.5, deducao: 675.49 },
+    { faixa: 'Faixa 5', base: 'Acima de R$ 4.664,68', aliquota: 27.5, deducao: 908.73 },
+  ]
+  return (
+    <div className="table-wrap">
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th>Faixa</th>
+            <th>Base (R$)</th>
+            <th>Alíquota</th>
+            <th>Dedução (R$)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(r => (
+            <tr key={r.faixa}>
+              <td>{r.faixa}</td>
+              <td>{r.base}</td>
+              <td>{formatPercent(r.aliquota)}</td>
+              <td>{formatCurrency(r.deducao)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
