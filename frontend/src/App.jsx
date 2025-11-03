@@ -1,12 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import './App.css'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const ENV_BASE = (import.meta.env.VITE_API_BASE_URL || '').trim()
+const DEFAULT_DEV_BASE = ''
+const DEFAULT_PROD_BASE = 'https://calculadora-irrf.onrender.com'
+const API_BASE = ENV_BASE !== ''
+  ? ENV_BASE
+  : (import.meta.env.DEV ? DEFAULT_DEV_BASE : DEFAULT_PROD_BASE)
 
 function App() {
+  const rendimentoRef = useRef(null)
   const [form, setForm] = useState({
     rendimento_tributavel: '',
-    previdencia_oficial: '',
+    previdencia_oficial: '0',
     quantidade_dependentes: '0',
     pensao_alimenticia: ''
   })
@@ -31,6 +37,19 @@ function App() {
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
+  function handleClear() {
+    setForm({
+      rendimento_tributavel: '',
+      previdencia_oficial: '0',
+      quantidade_dependentes: '0',
+      pensao_alimenticia: ''
+    })
+    setResult(null)
+    setError('')
+    setLoading(false)
+    setTimeout(() => rendimentoRef.current?.focus(), 0)
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
@@ -47,11 +66,25 @@ function App() {
         quantidade_dependentes: Number(form.quantidade_dependentes),
         pensao_alimenticia: form.pensao_alimenticia === '' ? 0 : Number(form.pensao_alimenticia)
       }
-      const resp = await fetch(`${API_BASE}/calcular-irrf`, {
+      const url = `${API_BASE}/calcular-irrf`
+      let resp = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
+      // Fallback automático para 127.0.0.1 quando localhost falhar (ambiente Windows/rede)
+      if (!resp.ok && import.meta.env.DEV && API_BASE.includes('localhost')) {
+        const fallbackUrl = `${DEFAULT_DEV_BASE.replace('localhost', '127.0.0.1')}/calcular-irrf`
+        try {
+          resp = await fetch(fallbackUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          })
+        } catch (e) {
+          // mantém erro original
+        }
+      }
       if (!resp.ok) {
         const data = await resp.json().catch(() => null)
         throw new Error(data?.erro || `Erro ${resp.status}`)
@@ -59,7 +92,10 @@ function App() {
       const data = await resp.json()
       setResult(data)
     } catch (err) {
-      setError(err.message || 'Erro ao calcular IRRF')
+      const message = (err && err.message === 'Failed to fetch')
+        ? 'Falha ao conectar à API. Verifique se a API está em execução e acessível.'
+        : (err.message || 'Erro ao calcular IRRF')
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -79,6 +115,8 @@ function App() {
             <input
               inputMode="decimal"
               placeholder="Ex.: 5000,00"
+              autoFocus
+              ref={rendimentoRef}
               value={form.rendimento_tributavel}
               onChange={e => updateField('rendimento_tributavel', e.target.value.replace(',', '.'))}
               required
@@ -119,9 +157,14 @@ function App() {
 
           {error && <div className="alert error">{error}</div>}
 
-          <button className="btn" type="submit" disabled={loading || !isValid}>
-            {loading ? 'Calculando...' : 'Calcular IRRF'}
-          </button>
+          <div className="actions">
+            <button className="btn secondary" type="button" onClick={handleClear}>
+              Limpar
+            </button>
+            <button className="btn primary" type="submit" disabled={loading || !isValid}>
+              {loading ? 'Calculando...' : 'Calcular'}
+            </button>
+          </div>
         </form>
 
         <section className="card result">
@@ -155,7 +198,9 @@ function App() {
                 <ResultItem label="IRRF após PL 1087/25" value={result.valor_irrf_apos_pl_1087_25} emphasis />
               )}
               {result.mensagem && (
-                <div className="result-message">{result.mensagem}</div>
+                <div className={`result-message ${result.mensagem.startsWith('A dedução prevista na PL 1085/25') ? 'pl-msg' : ''}`}>
+                  {result.mensagem}
+                </div>
               )}
             </div>
           )}
