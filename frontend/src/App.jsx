@@ -37,6 +37,13 @@ function App() {
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
+  function handleNumberKeyDown(e) {
+    // Impede inserir e/E/+/-, comuns em type=number
+    if (['e', 'E', '+', '-'].includes(e.key)) {
+      e.preventDefault()
+    }
+  }
+
   function handleClear() {
     setForm({
       rendimento_tributavel: '',
@@ -104,7 +111,7 @@ function App() {
   return (
     <div className="page">
       <header className="header">
-        <h1>Cálculo de IRRF</h1>
+        <h1>Simulador de IRRF</h1>
         <p className="subtitle">Tabela vigente a partir de 05/2025</p>
       </header>
 
@@ -113,12 +120,16 @@ function App() {
           <div className="field">
             <label>Rendimento tributável (R$)</label>
             <input
+              type="number"
               inputMode="decimal"
               placeholder="Ex.: 5000,00"
               autoFocus
               ref={rendimentoRef}
               value={form.rendimento_tributavel}
               onChange={e => updateField('rendimento_tributavel', e.target.value.replace(',', '.'))}
+              onKeyDown={handleNumberKeyDown}
+              step="0.01"
+              min="0"
               required
             />
           </div>
@@ -126,10 +137,14 @@ function App() {
           <div className="field">
             <label>Previdência oficial (R$)</label>
             <input
+              type="number"
               inputMode="decimal"
               placeholder="Ex.: 750,00"
               value={form.previdencia_oficial}
               onChange={e => updateField('previdencia_oficial', e.target.value.replace(',', '.'))}
+              onKeyDown={handleNumberKeyDown}
+              step="0.01"
+              min="0"
               required
             />
           </div>
@@ -148,10 +163,14 @@ function App() {
           <div className="field">
             <label>Pensão alimentícia (R$)</label>
             <input
+              type="number"
               inputMode="decimal"
               placeholder="Ex.: 0,00"
               value={form.pensao_alimenticia}
               onChange={e => updateField('pensao_alimenticia', e.target.value.replace(',', '.'))}
+              onKeyDown={handleNumberKeyDown}
+              step="0.01"
+              min="0"
             />
           </div>
 
