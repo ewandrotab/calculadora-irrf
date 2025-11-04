@@ -443,27 +443,29 @@ function MemoriaModal({ memoria, onClose }) {
                       <span className="badge">{et.ordem}</span>
                       <div className="mem-card-title">{et.titulo}</div>
                     </div>
-                    {et.descricao && <div className="mem-card-desc">{et.descricao}</div>}
-                    {et.formula && (
-                      <div className="mem-card-formula">Fórmula: <code>{et.formula}</code></div>
-                    )}
-                    {et.valores && (
-                      <div className="mem-card-box">
-                        <div className="mem-card-subtitle">Valores</div>
-                        <KeyValue data={et.valores} />
-                      </div>
-                    )}
-                    {typeof et.resultado !== 'undefined' && (
-                      <div className="mem-card-box resultado">
-                        <div className="mem-card-subtitle">Resultado</div>
-                        <div className="kv">
-                          <div className="kv-row">
-                            <span className="kv-k">valor</span>
-                            <span className="kv-v">{typeof et.resultado === 'number' ? formatCurrency(et.resultado) : JSON.stringify(et.resultado)}</span>
+                    <div className="mem-card-body">
+                      {et.descricao && <div className="mem-card-desc">{et.descricao}</div>}
+                      {et.formula && (
+                        <div className="mem-card-formula">Fórmula: <code>{et.formula}</code></div>
+                      )}
+                      {et.valores && (
+                        <div className="mem-card-box">
+                          <div className="mem-card-subtitle">Valores</div>
+                          <KeyValue data={et.valores} />
+                        </div>
+                      )}
+                      {typeof et.resultado !== 'undefined' && (
+                        <div className="mem-card-box resultado">
+                          <div className="mem-card-subtitle">Resultado</div>
+                          <div className="kv">
+                            <div className="kv-row">
+                              <span className="kv-k">valor</span>
+                              <span className="kv-v">{typeof et.resultado === 'number' ? formatCurrency(et.resultado) : JSON.stringify(et.resultado)}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

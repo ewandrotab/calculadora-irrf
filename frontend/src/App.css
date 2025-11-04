@@ -189,7 +189,7 @@
   z-index: 50;
 }
 .modal {
-  width: min(720px, 100%);
+  width: min(960px, 100%);
   background: linear-gradient(180deg, var(--panel), var(--panel-2));
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 14px;
@@ -236,8 +236,12 @@
 .et-box.resultado .kv-v { color: #ffffff; font-size: 18px; }
 
 /* Cards de memória */
-.cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.mem-card { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 12px; display: grid; gap: 8px; }
+.cards-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
+.mem-card { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; height: 100%; min-height: 320px; width: 100%; overflow: hidden; }
+.mem-card-body { flex: 1; overflow: auto; display: grid; gap: 8px; scrollbar-gutter: stable; }
+.cards-grid > .mem-card { min-width: 0; }
+.timeline-item .content { min-width: 0; }
+.kv-row, .mem-card-desc, .mem-card-formula code, .et-formula code { word-break: break-word; overflow-wrap: anywhere; }
 .mem-card-header { display: flex; align-items: center; gap: 8px; }
 .badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: linear-gradient(90deg, var(--primary), var(--primary-700)); font-weight: 700; font-size: 12px; }
 .mem-card-title { font-weight: 700; }
@@ -250,4 +254,5 @@
 
 @media (max-width: 900px) {
   .cards-grid { grid-template-columns: 1fr; }
+  .mem-card { min-height: unset; }
 }
