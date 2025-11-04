@@ -371,7 +371,8 @@ function KeyValue({ data }) {
 }
 
 function MemoriaModal({ memoria, onClose }) {
-  const [viewMode, setViewMode] = useState('timeline') // 'timeline' | 'cards' | 'table'
+  const [viewMode, setViewMode] = useState('timeline') // 'timeline' | 'cards' | 'table' | 'stepper'
+  const [stepIndex, setStepIndex] = useState(0)
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -401,6 +402,12 @@ function MemoriaModal({ memoria, onClose }) {
                   type="button"
                   aria-pressed={viewMode === 'table'}
                 >Tabela</button>
+                <button
+                  className={`chip stepper ${viewMode === 'stepper' ? 'active' : ''}`}
+                  onClick={() => setViewMode('stepper')}
+                  type="button"
+                  aria-pressed={viewMode === 'stepper'}
+                >Stepper</button>
               </div>
             </div>
             <button className="btn close" onClick={onClose} type="button">Fechar</button>
@@ -515,6 +522,9 @@ function MemoriaModal({ memoria, onClose }) {
                 </table>
               </div>
             )}
+            {viewMode === 'stepper' && (
+              <StepperView etapas={memoria.etapas} index={stepIndex} setIndex={setStepIndex} />
+            )}
           </div>
         </div>
       </div>
@@ -523,3 +533,71 @@ function MemoriaModal({ memoria, onClose }) {
 }
 
 export default App
+
+function StepperView({ etapas = [], index, setIndex }) {
+  const ordered = [...(etapas || [])].sort((a, b) => a.ordem - b.ordem)
+  const max = ordered.length - 1
+  const current = ordered[Math.min(Math.max(index, 0), max)]
+  function go(delta) {
+    setIndex(prev => {
+      const next = Math.min(Math.max(prev + delta, 0), max)
+      return next
+    })
+  }
+  return (
+    <div className="stepper">
+      <div className="stepper-header">
+        {ordered.map((et, i) => (
+          <button
+            key={et.ordem}
+            className={`step ${i === index ? 'active' : i < index ? 'done' : ''}`}
+            onClick={() => setIndex(i)}
+            type="button"
+            aria-current={i === index}
+          >
+            <span className="step-dot" />
+            <span className="step-label">{et.ordem}. {et.titulo}</span>
+          </button>
+        ))}
+      </div>
+      {current && (
+        <div className="stepper-body">
+          <div className="mem-card">
+            <div className="mem-card-header">
+              <span className="badge">{current.ordem}</span>
+              <div className="mem-card-title">{current.titulo}</div>
+            </div>
+            <div className="mem-card-body">
+              {current.descricao && <div className="mem-card-desc">{current.descricao}</div>}
+              {current.formula && (
+                <div className="mem-card-formula">Fórmula: <code>{current.formula}</code></div>
+              )}
+              {current.valores && (
+                <div className="mem-card-box">
+                  <div className="mem-card-subtitle">Valores</div>
+                  <KeyValue data={current.valores} />
+                </div>
+              )}
+              {typeof current.resultado !== 'undefined' && (
+                <div className="mem-card-box resultado">
+                  <div className="mem-card-subtitle">Resultado</div>
+                  <div className="kv">
+                    <div className="kv-row">
+                      <span className="kv-k">valor</span>
+                      <span className="kv-v">{typeof current.resultado === 'number' ? formatCurrency(current.resultado) : JSON.stringify(current.resultado)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="stepper-controls">
+        <button className="btn secondary" onClick={() => go(-1)} type="button" disabled={index <= 0}>Anterior</button>
+        <div className="stepper-counter">Etapa {index + 1} de {ordered.length}</div>
+        <button className="btn primary" onClick={() => go(1)} type="button" disabled={index >= max}>Próximo</button>
+      </div>
+    </div>
+  )
+}
