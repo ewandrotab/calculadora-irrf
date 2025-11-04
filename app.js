@@ -100,6 +100,122 @@ app.post('/calcular-irrf', (req, res) => {
 	const reducao_pl_aplicada = Math.max(0, Math.min(reducao_pl_formula, valor_irrf));
 	const valor_irrf_apos_pl_1087_25 = round2(valor_irrf - reducao_pl_aplicada);
 
+	// Memória de cálculo
+	const memoria_calculo = {
+		entradas: {
+			rendimento_tributavel: round2(rendimento_tributavel),
+			previdencia_oficial: round2(previdencia_oficial),
+			quantidade_dependentes,
+			pensao_alimenticia: round2(pensao_alimenticia)
+		},
+		etapas: [
+			{
+				ordem: 1,
+				titulo: 'Cálculo da dedução por dependentes',
+				descricao: 'Quantidade de dependentes multiplicada pelo valor de dedução por dependente.',
+				formula: 'quantidade_dependentes * 189,59',
+				valores: {
+					quantidade_dependentes,
+					valor_por_dependente: DEDUCAO_POR_DEPENDENTE
+				},
+				resultado: deducao_dependentes
+			},
+			{
+				ordem: 2,
+				titulo: 'Cálculo das deduções legais',
+				descricao: 'Soma da Previdência Oficial, pensão alimentícia e a dedução por dependentes.',
+				formula: 'previdencia_oficial + pensao_alimenticia + deducao_dependentes',
+				valores: {
+					previdencia_oficial: round2(previdencia_oficial),
+					pensao_alimenticia: round2(pensao_alimenticia),
+					deducao_dependentes
+				},
+				resultado: soma_deducoes
+			},
+			{
+				ordem: 3,
+				titulo: 'Escolha da dedução aplicada',
+				descricao: 'Maior valor entre soma das deduções legais e o desconto simplificado mínimo.',
+				formula: 'max(soma_deducoes, 607,20)',
+				valores: {
+					soma_deducoes,
+					desconto_simplificado_minimo: DESCONTO_SIMPLIFICADO_MINIMO,
+					utilizou_simplificado_minimo: simplificado_minimo_usado
+				},
+				resultado: deducao_total_aplicada
+			},
+			{
+				ordem: 4,
+				titulo: 'Base líquida do IRRF',
+				descricao: 'Rendimento tributável menos a dedução aplicada.',
+				formula: 'rendimento_tributavel - deducao_total_aplicada',
+				valores: {
+					rendimento_tributavel: round2(rendimento_tributavel),
+					deducao_total_aplicada
+				},
+				resultado: base_liquida_irrf
+			},
+			{
+				ordem: 5,
+				titulo: 'Faixa da tabela progressiva',
+				descricao: 'Determinação da alíquota e parcela a deduzir conforme a base líquida.',
+				formula: 'tabela progressiva mensal 05/2025',
+				valores: {
+					base_liquida_irrf,
+					aliquota: aliquota_irrf,
+					deducao_conforme_tabela: round2(deducao_conforme_tabela)
+				},
+				resultado: { aliquota: aliquota_irrf, deducao: round2(deducao_conforme_tabela) }
+			},
+			{
+				ordem: 6,
+				titulo: 'Imposto pela tabela progressiva',
+				descricao: 'Cálculo do IR pela base líquida.',
+				formula: 'base_liquida_irrf * (aliquota/100) - deducao_conforme_tabela',
+				valores: {
+					base_liquida_irrf,
+					aliquota: aliquota_irrf,
+					deducao_conforme_tabela: round2(deducao_conforme_tabela)
+				},
+				resultado: valor_irrf
+			},
+			{
+				ordem: 7,
+				titulo: 'Redução PL 1087/25 (fórmula bruta)',
+				descricao: 'Cálculo da redução bruta pela fórmula da PL 1087/25 com limite legal.',
+				formula: '978,62 - (0,133145 * rendimento_tributavel)',
+				valores: {
+					coeficiente: 0.133145,
+					valor_fixo: 978.62,
+					rendimento_tributavel: round2(rendimento_tributavel)
+				},
+				resultado: reducao_pl_formula
+			},
+			{
+				ordem: 8,
+				titulo: 'Redução aplicada ao imposto',
+				descricao: 'Limitação da redução ao imposto devido (não negativa).',
+				formula: 'min(max(reducao_pl, 0), valor_irrf)',
+				valores: {
+					reducao_pl_calculada: reducao_pl_formula,
+					valor_irrf
+				},
+				resultado: reducao_pl_aplicada
+			},
+			{
+				ordem: 9,
+				titulo: 'IRRF após PL 1087/25',
+				descricao: 'Imposto final após aplicar a redução da PL, quando aplicável.',
+				formula: 'valor_irrf - reducao_pl_aplicada',
+				valores: {
+					valor_irrf,
+					reducao_pl_aplicada
+				},
+				resultado: valor_irrf_apos_pl_1087_25
+			}
+		]
+	};
+
 	const resposta = {
 		rendimento_tributavel,
 		...(!simplificado_minimo_usado ? {
@@ -118,7 +234,8 @@ app.post('/calcular-irrf', (req, res) => {
 			rendimento_tributavel > 7350
 				? { mensagem: 'A dedução prevista na PL 1085/25 não se aplica porque o rendimento tributável ultrapassa R$ 7.350,00.' }
 				: { valor_irrf_apos_pl_1087_25 }
-		)
+		),
+		memoria_calculo
 	};
 
 	return res.json(resposta);

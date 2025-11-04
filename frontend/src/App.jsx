@@ -19,6 +19,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
+  const [showMemoria, setShowMemoria] = useState(false)
 
   const isValid = useMemo(() => {
     const rt = Number(form.rendimento_tributavel)
@@ -98,6 +99,7 @@ function App() {
       }
       const data = await resp.json()
       setResult(data)
+      setShowMemoria(false)
     } catch (err) {
       const message = (err && err.message === 'Failed to fetch')
         ? 'Falha ao conectar à API. Verifique se a API está em execução e acessível.'
@@ -196,6 +198,9 @@ function App() {
             <button className="btn primary" type="submit" disabled={loading || !isValid}>
               {loading ? 'Calculando...' : 'Calcular'}
             </button>
+            <button className="btn mem-btn" type="button" disabled={!result?.memoria_calculo} onClick={() => setShowMemoria(true)}>
+              Memória de Cálculo
+            </button>
           </div>
         </form>
 
@@ -245,6 +250,10 @@ function App() {
       </section>
 
       <footer className="footer">API: {API_BASE}/calcular-irrf</footer>
+
+      {showMemoria && result?.memoria_calculo && (
+        <MemoriaModal memoria={result.memoria_calculo} onClose={() => setShowMemoria(false)} />)
+      }
     </div>
   )
 }
@@ -300,6 +309,167 @@ function IRRFTabela() {
           ))}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+const LABELS = {
+  rendimento_tributavel: 'Rendimento tributável',
+  previdencia_oficial: 'Previdência oficial',
+  quantidade_dependentes: 'Quantidade de dependentes',
+  pensao_alimenticia: 'Pensão alimentícia',
+  valor_por_dependente: 'Valor por dependente',
+  deducao_dependentes: 'Dedução por dependentes',
+  soma_deducoes: 'Soma das deduções',
+  desconto_simplificado_minimo: 'Desconto simplificado mínimo',
+  utilizou_simplificado_minimo: 'Utilizou simplificado mínimo',
+  deducao_total_aplicada: 'Dedução aplicada',
+  base_liquida_irrf: 'Base líquida IRRF',
+  aliquota: 'Alíquota',
+  deducao_conforme_tabela: 'Dedução conforme tabela',
+  valor_irrf: 'Valor do IRRF',
+  coeficiente: 'Coeficiente',
+  valor_fixo: 'Valor fixo',
+  reducao_pl_calculada: 'Redução PL (calculada)',
+  reducao_pl_aplicada: 'Redução PL (aplicada)',
+  valor_irrf_apos_pl_1087_25: 'IRRF após PL 1087/25'
+}
+
+function getLabel(key) {
+  if (LABELS[key]) return LABELS[key]
+  const pretty = key.replace(/_/g, ' ')
+  return pretty.charAt(0).toUpperCase() + pretty.slice(1)
+}
+
+function formatByKey(key, value) {
+  if (typeof value === 'boolean') return value ? 'Sim' : 'Não'
+  if (typeof value === 'number') {
+    if (key === 'aliquota') return formatPercent(value)
+    if (key === 'coeficiente') return Number(value).toLocaleString('pt-BR', { maximumFractionDigits: 6 })
+    if (key === 'quantidade_dependentes') return String(value)
+    return formatCurrency(value)
+  }
+  return String(value)
+}
+
+function KeyValue({ data }) {
+  if (!data) return null
+  const entries = Object.entries(data)
+  return (
+    <div className="kv">
+      {entries.map(([k, v]) => {
+        const label = getLabel(k)
+        return (
+          <div key={k} className="kv-row">
+            <span className="kv-k">{label}</span>
+            <span className="kv-v">{formatByKey(k, v)}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function MemoriaModal({ memoria, onClose }) {
+  const [viewMode, setViewMode] = useState('timeline') // 'timeline' | 'cards'
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>Memória de Cálculo</h3>
+          <div className="mem-switch">
+            <button
+              className={`chip ${viewMode === 'timeline' ? 'active' : ''}`}
+              onClick={() => setViewMode('timeline')}
+              type="button"
+            >Timeline</button>
+            <button
+              className={`chip ${viewMode === 'cards' ? 'active' : ''}`}
+              onClick={() => setViewMode('cards')}
+              type="button"
+            >Card</button>
+            <button className="btn close" onClick={onClose} type="button">Fechar</button>
+          </div>
+        </div>
+        <div className="modal-body">
+          <div className="mem-section">
+            <div className="mem-title">Entradas</div>
+            <KeyValue data={memoria.entradas} />
+          </div>
+          <div className="mem-section">
+            <div className="mem-title">Etapas</div>
+            {viewMode === 'timeline' && (
+              <ol className="timeline">
+                {memoria.etapas?.sort((a, b) => a.ordem - b.ordem).map(et => (
+                  <li key={et.ordem} className="timeline-item">
+                    <div className="dot" />
+                    <div className="content">
+                      <div className="et-title">{et.ordem}. {et.titulo}</div>
+                      {et.descricao && <div className="et-desc">{et.descricao}</div>}
+                      {et.formula && (
+                        <div className="et-formula">
+                          Fórmula: <code>{et.formula}</code>
+                        </div>
+                      )}
+                      {et.valores && (
+                        <div className="et-box">
+                          <div className="et-box-title">Valores</div>
+                          <KeyValue data={et.valores} />
+                        </div>
+                      )}
+                      {typeof et.resultado !== 'undefined' && (
+                        <div className="et-box resultado">
+                          <div className="et-box-title">Resultado</div>
+                          <div className="kv">
+                            <div className="kv-row">
+                              <span className="kv-k">valor</span>
+                              <span className="kv-v">{typeof et.resultado === 'number' ? formatCurrency(et.resultado) : JSON.stringify(et.resultado)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+            {viewMode === 'cards' && (
+              <div className="cards-grid">
+                {memoria.etapas?.sort((a, b) => a.ordem - b.ordem).map(et => (
+                  <div className="mem-card" key={et.ordem}>
+                    <div className="mem-card-header">
+                      <span className="badge">{et.ordem}</span>
+                      <div className="mem-card-title">{et.titulo}</div>
+                    </div>
+                    {et.descricao && <div className="mem-card-desc">{et.descricao}</div>}
+                    {et.formula && (
+                      <div className="mem-card-formula">Fórmula: <code>{et.formula}</code></div>
+                    )}
+                    {et.valores && (
+                      <div className="mem-card-box">
+                        <div className="mem-card-subtitle">Valores</div>
+                        <KeyValue data={et.valores} />
+                      </div>
+                    )}
+                    {typeof et.resultado !== 'undefined' && (
+                      <div className="mem-card-box resultado">
+                        <div className="mem-card-subtitle">Resultado</div>
+                        <div className="kv">
+                          <div className="kv-row">
+                            <span className="kv-k">valor</span>
+                            <span className="kv-v">{typeof et.resultado === 'number' ? formatCurrency(et.resultado) : JSON.stringify(et.resultado)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
