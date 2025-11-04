@@ -379,13 +379,14 @@ function MemoriaModal({ memoria, onClose }) {
         <div className="modal-header">
           <h3>Memória de Cálculo</h3>
           <div className="mem-switch">
+            <span className="switch-label">Modelo</span>
             <button
-              className={`chip ${viewMode === 'timeline' ? 'active' : ''}`}
+              className={`chip timeline ${viewMode === 'timeline' ? 'active' : ''}`}
               onClick={() => setViewMode('timeline')}
               type="button"
             >Timeline</button>
             <button
-              className={`chip ${viewMode === 'cards' ? 'active' : ''}`}
+              className={`chip card ${viewMode === 'cards' ? 'active' : ''}`}
               onClick={() => setViewMode('cards')}
               type="button"
             >Card</button>

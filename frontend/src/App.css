@@ -210,8 +210,10 @@
 .btn.close { background: #0b1220; border-color: #2a3550; }
 
 .mem-switch { display: flex; gap: 8px; align-items: center; }
+.switch-label { color: var(--muted); font-size: 12px; margin-right: 4px; }
 .chip { border: 1px solid #2a3550; background: #0b1220; color: var(--text); border-radius: 999px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
-.chip.active { border-color: rgba(124,58,237,.6); box-shadow: 0 0 0 3px rgba(124,58,237,.25); }
+.chip.timeline.active { border-color: rgba(124,58,237,.6); box-shadow: 0 0 0 3px rgba(124,58,237,.25); background: linear-gradient(90deg, var(--primary), var(--primary-700)); }
+.chip.card.active { border-color: rgba(14,165,233,.6); box-shadow: 0 0 0 3px rgba(14,165,233,.25); background: linear-gradient(90deg, #06b6d4, #0ea5e9); }
 
 .mem-section { margin-bottom: 18px; }
 .mem-title { font-weight: 700; margin-bottom: 8px; }
