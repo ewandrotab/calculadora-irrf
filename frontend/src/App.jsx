@@ -371,25 +371,38 @@ function KeyValue({ data }) {
 }
 
 function MemoriaModal({ memoria, onClose }) {
-  const [viewMode, setViewMode] = useState('timeline') // 'timeline' | 'cards'
+  const [viewMode, setViewMode] = useState('timeline') // 'timeline' | 'cards' | 'table'
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Memória de Cálculo</h3>
-          <div className="mem-switch">
-            <span className="switch-label">Modelo</span>
-            <button
-              className={`chip timeline ${viewMode === 'timeline' ? 'active' : ''}`}
-              onClick={() => setViewMode('timeline')}
-              type="button"
-            >Timeline</button>
-            <button
-              className={`chip card ${viewMode === 'cards' ? 'active' : ''}`}
-              onClick={() => setViewMode('cards')}
-              type="button"
-            >Card</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="mem-switch-panel" role="group" aria-label="Modelo de visualização">
+              <div className="switch-title">Modelo</div>
+              <div className="switch-help">Escolha o formato de exibição</div>
+              <div className="switch-group">
+                <button
+                  className={`chip timeline ${viewMode === 'timeline' ? 'active' : ''}`}
+                  onClick={() => setViewMode('timeline')}
+                  type="button"
+                  aria-pressed={viewMode === 'timeline'}
+                >Timeline</button>
+                <button
+                  className={`chip card ${viewMode === 'cards' ? 'active' : ''}`}
+                  onClick={() => setViewMode('cards')}
+                  type="button"
+                  aria-pressed={viewMode === 'cards'}
+                >Card</button>
+                <button
+                  className={`chip table ${viewMode === 'table' ? 'active' : ''}`}
+                  onClick={() => setViewMode('table')}
+                  type="button"
+                  aria-pressed={viewMode === 'table'}
+                >Tabela</button>
+              </div>
+            </div>
             <button className="btn close" onClick={onClose} type="button">Fechar</button>
           </div>
         </div>
@@ -468,6 +481,38 @@ function MemoriaModal({ memoria, onClose }) {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+            {viewMode === 'table' && (
+              <div className="table-wrap">
+                <table className="mem-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Título</th>
+                      <th>Descrição</th>
+                      <th>Fórmula</th>
+                      <th>Resultado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {memoria.etapas?.sort((a, b) => a.ordem - b.ordem).map(et => (
+                      <tr key={et.ordem}>
+                        <td className="ordem"><span className="badge">{et.ordem}</span></td>
+                        <td className="titulo">{et.titulo}</td>
+                        <td className="descricao muted">{et.descricao || '-'}</td>
+                        <td className="formula">{et.formula ? <code>{et.formula}</code> : '-'}</td>
+                        <td className="resultado">
+                          {typeof et.resultado === 'undefined' ? '-' : (
+                            <span className="pill">
+                              {typeof et.resultado === 'number' ? formatCurrency(et.resultado) : JSON.stringify(et.resultado)}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
