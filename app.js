@@ -87,13 +87,16 @@ app.post('/calcular-irrf', (req, res) => {
 	if (valor_irrf < 0) valor_irrf = 0; // Não retornar IR negativo
 	valor_irrf = round2(valor_irrf); // 2 casas decimais
 
-	// Redução conforme PL 1087/25: aplicar sempre a equação (valor bruto)
-	let reducao_pl_formula = round2(978.62 - (0.133145 * rendimento_tributavel));
-	if (rendimento_tributavel > 7350) {
-		reducao_pl_formula = 0; // Limite: acima de 7.350 não há redução aplicável
+	// Redução conforme PL 1087/25
+	let reducao_pl_formula;
+	if (rendimento_tributavel <= 5000) {
+		reducao_pl_formula = round2(Math.min(valor_irrf, 312.89));
+	} else if (rendimento_tributavel <= 7350) {
+		reducao_pl_formula = round2(978.62 - (0.133145 * rendimento_tributavel));
+	} else {
+		reducao_pl_formula = 0;
 	}
 	if (valor_irrf === 0) {
-		// Se não há IR devido, a redução também deve ser zero
 		reducao_pl_formula = 0;
 	}
 	// Redução aplicada ao imposto (limitada ao IR e não negativa)
@@ -181,13 +184,17 @@ app.post('/calcular-irrf', (req, res) => {
 			},
 			{
 				ordem: 7,
-				titulo: 'Redução PL 1087/25 (fórmula bruta)',
-				descricao: 'Cálculo da redução bruta pela fórmula da PL 1087/25 com limite legal.',
-				formula: '978,62 - (0,133145 * rendimento_tributavel)',
+				titulo: 'Redução PL 1087/25 (regra aplicada)',
+				descricao: 'Cálculo da redução conforme a faixa de rendimento e limitações legais.',
+				formula: rendimento_tributavel <= 5000
+					? 'min(valor_irrf, 312,89)'
+					: rendimento_tributavel <= 7350
+						? '978,62 - (0,133145 * rendimento_tributavel)'
+						: '0',
 				valores: {
-					coeficiente: 0.133145,
-					valor_fixo: 978.62,
-					rendimento_tributavel: round2(rendimento_tributavel)
+					rendimento_tributavel: round2(rendimento_tributavel),
+					valor_irrf,
+					limite_superior: 7350
 				},
 				resultado: reducao_pl_formula
 			},
