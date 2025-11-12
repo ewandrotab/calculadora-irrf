@@ -137,6 +137,10 @@
 .result-item.emphasis { border-color: rgba(124,58,237,.35); background: rgba(124,58,237,.08); }
 .result-label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
 .result-value { font-size: 18px; font-weight: 700; }
+.result-item.variant-reduction { border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.12); }
+.result-item.variant-reduction .result-value { color: #4ade80; }
+.result-item.variant-after { border-color: rgba(14,165,233,.35); background: rgba(14,165,233,.12); }
+.result-item.variant-after .result-value { color: #38bdf8; }
 .result-message { grid-column: span 2; color: var(--muted); padding-top: 6px; }
 .result-message.pl-msg { color: #facc15; background: rgba(250, 204, 21, .1); border: 1px solid rgba(250, 204, 21, .25); padding: 10px 12px; border-radius: 10px; }
 

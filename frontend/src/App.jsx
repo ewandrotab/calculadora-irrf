@@ -229,10 +229,10 @@ function App() {
               <ResultItem label="Dedução conforme tabela" value={result.deducao_conforme_tabela} />
               <ResultItem label="Valor do IRRF" value={result.valor_irrf} emphasis />
               {typeof result.reducao_pl_1087_25 === 'number' && (
-                <ResultItem label="Redução PL 1087/25" value={result.reducao_pl_1087_25} />
+                <ResultItem label="Redução PL 1087/25" value={result.reducao_pl_1087_25} variant="reduction" />
               )}
               {typeof result.valor_irrf_apos_pl_1087_25 === 'number' && (
-                <ResultItem label="IRRF após PL 1087/25" value={result.valor_irrf_apos_pl_1087_25} emphasis />
+                <ResultItem label="IRRF após PL 1087/25" value={result.valor_irrf_apos_pl_1087_25} emphasis variant="after" />
               )}
               {result.mensagem && (
                 <div className={`result-message ${result.mensagem.startsWith('A dedução prevista na PL 1085/25') ? 'pl-msg' : ''}`}>
@@ -262,13 +262,13 @@ function formatCurrency(value) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0))
 }
 
-function ResultItem({ label, value, format, emphasis }) {
+function ResultItem({ label, value, format, emphasis, variant }) {
   let display = value
   if (format === 'percent') display = `${Number(value)}%`
   else if (format === 'int') display = Number(value)
   else display = formatCurrency(value)
   return (
-    <div className={`result-item ${emphasis ? 'emphasis' : ''}`}>
+    <div className={`result-item ${emphasis ? 'emphasis' : ''} ${variant ? `variant-${variant}` : ''}`}>
       <span className="result-label">{label}</span>
       <span className="result-value">{display}</span>
     </div>
