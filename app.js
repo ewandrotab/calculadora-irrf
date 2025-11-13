@@ -99,6 +99,7 @@ app.post('/calcular-irrf', (req, res) => {
 	if (valor_irrf === 0) {
 		reducao_pl_formula = 0;
 	}
+	reducao_pl_formula = round2(Math.max(0, Math.min(reducao_pl_formula, valor_irrf)));
 	// Redução aplicada ao imposto (limitada ao IR e não negativa)
 	const reducao_pl_aplicada = Math.max(0, Math.min(reducao_pl_formula, valor_irrf));
 	const valor_irrf_apos_pl_1087_25 = round2(valor_irrf - reducao_pl_aplicada);
@@ -185,11 +186,11 @@ app.post('/calcular-irrf', (req, res) => {
 			{
 				ordem: 7,
 				titulo: 'Redução PL 1087/25 (regra aplicada)',
-				descricao: 'Cálculo da redução conforme a faixa de rendimento e limitações legais.',
+				descricao: 'Cálculo da redução conforme a faixa de rendimento e limitações legais, limitada ao imposto devido.',
 				formula: rendimento_tributavel <= 5000
 					? 'min(valor_irrf, 312,89)'
 					: rendimento_tributavel <= 7350
-						? '978,62 - (0,133145 * rendimento_tributavel)'
+						? 'max(0, min(978,62 - 0,133145 * rendimento_tributavel, valor_irrf))'
 						: '0',
 				valores: {
 					rendimento_tributavel: round2(rendimento_tributavel),
